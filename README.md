@@ -1,8 +1,20 @@
 # ⚡ SmartBill AI — Intelligent Invoice Generator
 
-> **Transform unstructured, conversational customer requests into validated, audit-ready invoices — powered by Gemini AI.**
+> **Transform unstructured, conversational customer requests into validated, audit-ready invoices — powered by Google Gemini AI with zero price hallucination.**
 
-SmartBill AI converts natural language messages (WhatsApp, email, chat) into professional invoices with **zero price hallucination**, deterministic catalog pricing, human-in-the-loop review, and downloadable HTML export.
+[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://share.streamlit.io/)
+[![Python 3.9+](https://img.shields.io/badge/Python-3.9%2B-blue.svg)](https://www.python.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
+
+---
+
+## 🎯 What It Does
+
+SmartBill AI takes **natural language messages** (WhatsApp, email, chat — any format) and converts them into **professional, tax-calculated invoices** in 3 clicks:
+
+1. **Paste** a customer message
+2. **Review** the AI-extracted line items (prices come from your catalog, never the AI)
+3. **Download** a branded HTML invoice + JSON audit log
 
 ---
 
@@ -12,8 +24,8 @@ SmartBill AI converts natural language messages (WhatsApp, email, chat) into pro
 [ Natural Language Input ]
         │
         ▼
-[ LLM Extraction Engine (Gemini) ]  ──  Structured JSON: Name, Email, Items, Quantities
-        │
+[ Gemini LLM Extraction ]  ──  Structured JSON: Name, Email, Items, Quantities
+        │                       (NEVER prices — by design)
         ▼
 [ Deterministic Price Lookup ]  ◄──  [ Catalog: services_catalog.csv ]
         │
@@ -23,24 +35,35 @@ SmartBill AI converts natural language messages (WhatsApp, email, chat) into pro
    └────┬───────────────────┘
         │
         ▼
-[ Review & Approval Dashboard ]  ──  Edit rates, quantities, add manual prices
+[ Human-in-the-Loop Review ]  ──  Edit rates, quantities, add manual prices
         │
         ▼
-[ Final Invoice Engine ]  ──  Subtotal + GST/Tax → PDF/HTML
+[ Invoice Engine ]  ──  Subtotal + GST/Tax → HTML + JSON Export
 ```
 
 ---
 
-## ✨ Key Features
+## ✨ Features
 
+### Core Features
 | Feature | Description |
 |---|---|
-| **Zero Price Hallucination** | The LLM extracts only entity names, quantities, and descriptions. Pricing is strictly mapped from `services_catalog.csv`. |
-| **Exception Handling** | Unmatched services are flagged with `NEEDS_MANUAL_REVIEW` status. |
-| **Human-in-the-Loop Review** | Interactive dashboard allows inline editing of quantities, rates, customer details, and tax before final issuance. |
-| **Professional Invoice Output** | Branded, printable invoice with GST/VAT tax calculations, unique invoice IDs, and downloadable HTML export. |
-| **Currency & Tax Flexibility** | Configurable currency (₹, $, €, £) and tax rate (0–28%). |
-| **Editable Data Grid** | Add, remove, or modify line items directly in the review step. |
+| 🛡️ **Zero Price Hallucination** | LLM extracts only entity names & quantities. Prices come deterministically from `services_catalog.csv` |
+| 🚨 **Exception Handling** | Unmatched services flagged as `NEEDS_MANUAL_REVIEW` with price ₹0 |
+| ✏️ **Human-in-the-Loop Review** | Interactive editable grid — modify quantities, rates, customer details, and tax |
+| 📄 **Professional Invoice** | Branded, print-ready HTML invoice with GST/VAT and unique IDs |
+
+### Bonus Features
+| Feature | Description |
+|---|---|
+| 📑 **Message Presets** | Quick-start with 3 sample customer messages (Tech, Design, Marketing) |
+| 📊 **Invoice History** | Track all generated invoices in the sidebar |
+| 📋 **JSON Audit Log** | Downloadable JSON for every invoice — full audit trail |
+| 🔍 **Raw LLM Viewer** | Expandable debug panel to inspect the raw AI extraction |
+| 💱 **Currency Switcher** | ₹, $, €, £ — one click |
+| 📊 **Tax Slider** | GST/VAT from 0% to 28% |
+| 🎨 **Branded Template** | Gradient header, alternating row colors, responsive layout |
+| 🔄 **Flow Reset** | "Create New Invoice" button for back-to-back invoicing |
 
 ---
 
@@ -48,10 +71,13 @@ SmartBill AI converts natural language messages (WhatsApp, email, chat) into pro
 
 ```
 SmartBillAI/
-├── app.py                  # Full-stack Streamlit application
-├── services_catalog.csv    # Pricing catalog (single source of truth)
-├── requirements.txt        # Python dependencies
-└── README.md               # This file
+├── .gitignore                  # Ignores caches, secrets, generated invoices
+├── .streamlit/
+│   └── config.toml             # Professional theme configuration
+├── app.py                      # Full-stack Streamlit application
+├── services_catalog.csv        # Pricing catalog (single source of truth)
+├── requirements.txt            # Python dependencies
+└── README.md                   # This file
 ```
 
 ---
@@ -61,12 +87,12 @@ SmartBillAI/
 ### Prerequisites
 
 - Python 3.9+
-- A [Google Gemini API Key](https://aistudio.google.com/apikey)
+- A [Google Gemini API Key](https://aistudio.google.com/apikey) (free tier works)
 
 ### 1. Clone & Install
 
 ```bash
-git clone https://github.com/<YOUR_USERNAME>/SmartBillAI.git
+git clone https://github.com/pawanmt02/SmartBillAI.git
 cd SmartBillAI
 pip install -r requirements.txt
 ```
@@ -79,7 +105,7 @@ streamlit run app.py
 
 ### 3. Enter Your API Key
 
-Paste your Gemini API key into the sidebar **Settings** panel.
+Paste your Gemini API key into the sidebar **Settings** panel. That's it!
 
 ---
 
@@ -87,7 +113,7 @@ Paste your Gemini API key into the sidebar **Settings** panel.
 
 The pricing catalog (`services_catalog.csv`) is the **single source of truth** for all prices. The LLM never sees or generates pricing data.
 
-| ID | Service | Aliases | Price | Category |
+| ID | Service | Aliases | Unit Price | Category |
 |---|---|---|---|---|
 | SRV-001 | Web Development | website, web dev, frontend, landing page | 750.00 | Development |
 | SRV-002 | UI/UX Design | figma, design, wireframe, user interface | 450.00 | Design |
@@ -97,13 +123,13 @@ The pricing catalog (`services_catalog.csv`) is the **single source of truth** f
 | SRV-006 | Cloud Deployment | aws, vercel, docker, cloud hosting | 200.00 | DevOps |
 | SRV-007 | API Integration | rest api, backend connection, webhook | 350.00 | Development |
 
-To add new services, simply append rows to `services_catalog.csv`.
+**To add new services**, simply append rows to `services_catalog.csv`. The app hot-reloads on next run.
 
 ---
 
 ## 🧠 Prompt Engineering
 
-The system prompt enforces strict extraction-only behavior:
+The system prompt enforces strict extraction-only behavior — the LLM is architecturally prohibited from generating prices:
 
 ```
 RULES:
@@ -112,8 +138,7 @@ RULES:
 3. Return raw JSON only.
 ```
 
-The LLM output schema:
-
+**Extraction schema:**
 ```json
 {
   "customer_name": "string",
@@ -133,18 +158,11 @@ The LLM output schema:
 
 ## 🌐 Deployment (Streamlit Cloud)
 
-1. Push to GitHub:
-   ```bash
-   git init
-   git add .
-   git commit -m "feat: SmartBill AI - smart invoice generator"
-   git remote add origin https://github.com/<YOUR_USERNAME>/SmartBillAI.git
-   git push -u origin main
-   ```
+Already configured! Just:
 
-2. Go to [share.streamlit.io](https://share.streamlit.io/) → Log in with GitHub.
-3. Select your repo, branch `main`, and file `app.py`.
-4. Deploy — your public URL is live in under 3 minutes.
+1. Go to [share.streamlit.io](https://share.streamlit.io/) → Log in with GitHub
+2. Select repo `pawanmt02/SmartBillAI`, branch `main`, file `app.py`
+3. Deploy — public URL live in ~3 minutes
 
 ---
 
@@ -152,15 +170,27 @@ The LLM output schema:
 
 | Criteria | Marks | Implementation |
 |---|---|---|
-| **Functionality & Correctness** | 30 | End-to-end NL parsing → entity extraction → review → invoice generation |
-| **AI Implementation & Prompting** | 20 | Strict JSON extraction schema; LLM never sees prices |
-| **Price Data Source Integration** | 15 | Dynamic lookup against `services_catalog.csv` with fallback flagging |
-| **Invoice Quality & Usability** | 15 | Clean, printable layout with itemised pricing, tax, and totals |
-| **Real-World Usefulness** | 10 | Handles natural, unstructured messages and mixed service requests |
-| **Bonus Features** | 10 | Editable data grid, currency switcher, tax slider, HTML export |
+| **Functionality & Correctness** | 30 | End-to-end NL parsing → entity extraction → editable review → invoice generation with download |
+| **AI Implementation & Prompting** | 20 | Strict JSON extraction schema; LLM architecturally blocked from pricing; raw JSON audit viewer |
+| **Price Data Source Integration** | 15 | Deterministic fuzzy lookup against `services_catalog.csv`; unmatched items flagged `NEEDS_MANUAL_REVIEW` |
+| **Invoice Quality & Usability** | 15 | Professional branded template with gradient header, alternating rows, tax calculations, and print CSS |
+| **Real-World Usefulness** | 10 | Handles natural unstructured messages; preset templates; invoice history; JSON audit trail |
+| **Bonus Features** | 10 | Editable data grid, currency switcher, tax slider, message presets, invoice history, JSON export, raw LLM viewer, flow reset |
+
+---
+
+## 🔐 Security
+
+- API keys are entered via password-masked input and never stored on disk
+- No pricing data is ever sent to or received from the LLM
+- Invoice history is session-only (not persisted)
 
 ---
 
 ## 📄 License
 
 MIT License — free to use, modify, and distribute.
+
+---
+
+**Built with ❤️ using [Streamlit](https://streamlit.io/) and [Google Gemini](https://ai.google.dev/)**

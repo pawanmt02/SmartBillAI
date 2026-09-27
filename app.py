@@ -321,11 +321,16 @@ st.caption(
 # ── Sidebar settings ──
 with st.sidebar:
     st.header("⚙️ Settings")
+    # Auto-load from secrets if available, otherwise manual input
+    default_key = st.secrets.get("general", {}).get("GEMINI_API_KEY", "")
     api_key = st.text_input(
         "Gemini API Key",
+        value=default_key,
         type="password",
         help="Get your key at https://aistudio.google.com/apikey",
     )
+    if default_key:
+        st.success("🔑 API key loaded from secrets")
     tax_rate = st.slider(
         "Tax Rate (GST / VAT %)", min_value=0, max_value=28, value=18
     )

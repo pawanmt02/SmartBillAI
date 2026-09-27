@@ -4,6 +4,7 @@ import json
 import re
 import base64
 import uuid
+import time
 from datetime import datetime
 from io import BytesIO
 from google import genai
@@ -155,8 +156,20 @@ RULES:
 """
 
 
+FALLBACK_MODELS = [
+    "gemini-3.8-flash",
+    "gemini-3.5-flash",
+    "gemini-2.5-flash",
+    "gemini-2.0-flash",
+]
+
+
 def extract_invoice_details(api_key: str, text: str) -> dict:
-    """Call Gemini to extract structured invoice data from free-form text."""
+    """Call Gemini to extract structured invoice data from free-form text.
+
+    Tries multiple models with automatic retries and exponential backoff
+    to handle 503 overload errors and 404 deprecation errors gracefully.
+    """
     client = genai.Client(api_key=api_key)
 
     prompt = f"""{SYSTEM_PROMPT}
@@ -174,13 +187,42 @@ Extract data from the following customer message and return JSON matching this s
 Customer Message:
 \"\"\"{text}\"\"\"
 """
-    response = client.models.generate_content(
-        model="gemini-3.8-flash",
-        contents=prompt,
+    last_error = None
+
+    for model_name in FALLBACK_MODELS:
+        for attempt in range(3):  # Up to 3 retries per model
+            try:
+                response = client.models.generate_content(
+                    model=model_name,
+                    contents=prompt,
+                )
+                clean_json = re.sub(r"```json|```", "", response.text).strip()
+                result = json.loads(clean_json)
+                # Store which model worked for transparency
+                result["_model_used"] = model_name
+                return result
+
+            except Exception as e:
+                last_error = e
+                error_str = str(e)
+
+                # 404 = model doesn't exist → skip to next model immediately
+                if "404" in error_str or "NOT_FOUND" in error_str:
+                    break
+
+                # 503 = overloaded → wait and retry this model
+                if "503" in error_str or "UNAVAILABLE" in error_str:
+                    wait = (2 ** attempt) + 1  # 2s, 3s, 5s
+                    time.sleep(wait)
+                    continue
+
+                # Other errors → skip to next model
+                break
+
+    raise Exception(
+        f"All models failed. Last error: {last_error}\n"
+        f"Models tried: {', '.join(FALLBACK_MODELS)}"
     )
-    # Strip markdown fences that models sometimes add
-    clean_json = re.sub(r"```json|```", "", response.text).strip()
-    return json.loads(clean_json)
 
 
 # ──────────────────────────────────────────────
@@ -450,9 +492,11 @@ if st.button("🚀 Process & Extract Entities", type="primary", use_container_wi
                 # Success summary
                 matched = sum(1 for i in processed_items if i["Status"] == "MATCHED")
                 flagged = sum(1 for i in processed_items if i["Status"] == "NEEDS_MANUAL_REVIEW")
+                model_used = parsed.pop("_model_used", "unknown")
                 st.success(
                     f"✅ Extracted **{len(processed_items)}** items — "
-                    f"**{matched}** matched, **{flagged}** flagged for review."
+                    f"**{matched}** matched, **{flagged}** flagged for review. "
+                    f"(Model: `{model_used}`)"
                 )
 
             except json.JSONDecodeError:

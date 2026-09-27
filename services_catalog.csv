@@ -1,0 +1,8 @@
+service_id,service_name,aliases,unit_price,category
+SRV-001,Web Development,"website, web dev, frontend, landing page",750.00,Development
+SRV-002,UI/UX Design,"figma, design, wireframe, user interface",450.00,Design
+SRV-003,SEO Optimization,"seo, search engine, ranking",300.00,Marketing
+SRV-004,Content Writing,"blog post, copywriting, article, copy",120.00,Marketing
+SRV-005,Logo & Branding,"branding, brand identity, vector logo",250.00,Design
+SRV-006,Cloud Deployment,"aws, vercel, docker, cloud hosting",200.00,DevOps
+SRV-007,API Integration,"rest api, backend connection, webhook",350.00,Development

@@ -6,7 +6,7 @@ import base64
 import uuid
 from datetime import datetime
 from io import BytesIO
-import google.generativeai as genai
+from google import genai
 
 
 # ──────────────────────────────────────────────
@@ -157,8 +157,7 @@ RULES:
 
 def extract_invoice_details(api_key: str, text: str) -> dict:
     """Call Gemini to extract structured invoice data from free-form text."""
-    genai.configure(api_key=api_key)
-    model = genai.GenerativeModel("gemini-1.5-flash")
+    client = genai.Client(api_key=api_key)
 
     prompt = f"""{SYSTEM_PROMPT}
 
@@ -175,7 +174,10 @@ Extract data from the following customer message and return JSON matching this s
 Customer Message:
 \"\"\"{text}\"\"\"
 """
-    response = model.generate_content(prompt)
+    response = client.models.generate_content(
+        model="gemini-2.5-flash",
+        contents=prompt,
+    )
     # Strip markdown fences that models sometimes add
     clean_json = re.sub(r"```json|```", "", response.text).strip()
     return json.loads(clean_json)
